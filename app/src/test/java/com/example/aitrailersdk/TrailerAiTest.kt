@@ -9,7 +9,7 @@ class TrailerAITest {
 
     @Test
     fun testInitialization() {
-        val trailerAI = TrailerAI.initialize(TrailerAiConfig())
+        val trailerAI = TrailerAi.initialize(TrailerAiConfig())
         // Test passes if no exception thrown
         assert(true)
     }
@@ -47,7 +47,7 @@ class TrailerAITest {
 
     @Test
     fun testBasicSearch() = runTest {
-        val trailerAI = TrailerAI.initialize(
+        val trailerAI = TrailerAi.initialize(
             TrailerAiConfig(
                 enableLogging = true,
                 geminiApiKey = "test-key" // This will fail but test the flow
