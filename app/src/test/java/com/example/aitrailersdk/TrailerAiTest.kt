@@ -1,10 +1,13 @@
 package com.example.aitrailersdk
 
 import com.example.aitrailersdk.core.config.TrailerAiConfig
+import com.example.aitrailersdk.core.impl.GeminiTrailerService
+import com.example.aitrailersdk.core.impl.PatternMatchingService
+import com.example.aitrailersdk.core.impl.YouTubeTrailerService
 import com.example.aitrailersdk.core.model.TrailerRequest
 import com.example.aitrailersdk.core.model.TrailerResult
 import com.example.aitrailersdk.core.model.TrailerSource
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class TrailerAITest {
@@ -12,17 +15,14 @@ class TrailerAITest {
     @Test
     fun testInitialization() {
         val trailerAI = TrailerAi.initialize(TrailerAiConfig())
-        // Test passes if no exception thrown
         assert(true)
     }
 
     @Test
     fun testTrailerRequestValidation() {
-        // Valid request
         val validRequest = TrailerRequest("Inception", "2010", "Christopher Nolan")
         assert(validRequest.movieTitle.isNotBlank())
 
-        // Invalid request (blank title)
         try {
             TrailerRequest("")
             assert(false) { "Should have thrown exception for blank title" }
@@ -32,80 +32,130 @@ class TrailerAITest {
     }
 
     @Test
-    fun testConfigValidation() = runTest {
-        // Valid config
-        val validConfig = TrailerAiConfig(enableLogging = true)
-        assert(validConfig.maxRetries >= 0)
-        assert(validConfig.timeOut.isPositive())
+    fun testConfigValidation() {
+        runBlocking {
+            val validConfig = TrailerAiConfig(enableLogging = true)
+            assert(validConfig.maxRetries >= 0)
+            assert(validConfig.timeOut.isPositive())
 
-        // Invalid config (negative retries)
-        try {
-            TrailerAiConfig(maxRetries = -1)
-            assert(false) { "Should have thrown exception for negative retries" }
-        } catch (e: IllegalArgumentException) {
-            // Expected
+            try {
+                TrailerAiConfig(maxRetries = -1)
+                assert(false) { "Should have thrown exception for negative retries" }
+            } catch (e: IllegalArgumentException) {
+                // Expected
+            }
         }
     }
 
     @Test
-    fun testBasicSearch() = runTest {
-        val trailerAI = TrailerAi.initialize(
-            TrailerAiConfig(
-                enableLogging = true,
-                geminiApiKey = "test-key" // This will fail but test the flow
-            )
-        )
+    fun testGeminiSuccessWithProvider() {
+        runBlocking {
+            // 1. Create a fake provider that mimics Gemini's response
+            val fakeProvider: suspend (String) -> String? = { 
+                "Sure! Here is the official trailer link: https://www.youtube.com/watch?v=yR7A-Y_mYCc hope you enjoy it!" 
+            }
 
-        val result = trailerAI.findTrailer(
-            TrailerRequest("Inception", "2010", "Christopher Nolan")
-        )
+            // 2. Initialize Service with the Fake Provider
+            val config = TrailerAiConfig(geminiApiKey = "fake-key", enableLogging = true)
+            val geminiService = GeminiTrailerService(config, fakeProvider)
 
-        // Should return NotFound since we're using a fake API key
-        assert(result is com.example.aitrailersdk.core.model.TrailerResult.NotFound ||
-                result is com.example.aitrailersdk.core.model.TrailerResult.Error)
+            // 3. Test
+            val result = geminiService.findTrailer(TrailerRequest("Help!", "1965"))
+
+            // 4. Verify that our Regex correctly extracted the URL from the provider's text
+            assert(result is TrailerResult.Success) { "Expected Success, but got $result" }
+            val success = result as TrailerResult.Success
+            assert(success.url == "https://www.youtube.com/watch?v=yR7A-Y_mYCc")
+            assert(success.source == TrailerSource.GEMINI_AI)
+            println("✅ Gemini Provider Success: ${success.url}")
+        }
     }
 
     @Test
-    fun testPatternMatchingFallback() = runTest {
-        // Test without API keys to test pattern matching
-        val trailerAi = TrailerAi.initialize(
-            TrailerAiConfig(
-                enableLogging = true,
-                geminiApiKey = null, // No Gemini
-                youtubeApiKey = null   // No YouTube API
+    fun testFallbackChain() {
+        runBlocking {
+            val trailerAi = TrailerAi.initialize(
+                TrailerAiConfig(
+                    enableLogging = true,
+                    geminiApiKey = null,
+                    youtubeApiKey = null
+                )
             )
-        )
 
-        // Test movies we know in pattern matching
-        val knownMovies = listOf(
-            "Inception",
-            "The Dark Knight",
-            "Interstellar",
-            "Avatar",
-            "Avengers",
-            "Joker"
-        )
+            val result = trailerAi.findTrailer(TrailerRequest("Inception"))
 
-        knownMovies.forEach { movieTitle ->
-            println("\n=== Testing Pattern Matching: $movieTitle ===")
+            assert(result is TrailerResult.Success)
+            val success = result as TrailerResult.Success
+            assert(success.source == TrailerSource.PATTERN_MATCHING)
+            println("✅ Fallback Chain Success: ${success.url} via ${success.source}")
+        }
+    }
 
-            val result = trailerAi.findTrailer(TrailerRequest(movieTitle))
+    @Test
+    fun debugGeminiService() {
+        runBlocking {
+            val config = TrailerAiConfig(
+                geminiApiKey = "AIzaSyBLS8jcDZhNuIbhCe1fuD-k3aLfEL-EJfQ",
+                enableLogging = true
+            )
+            val service = GeminiTrailerService(config)
 
-            when (result) {
+            println("\n--- Starting Gemini Real-Key Debug ---")
+            try {
+                val result = service.findTrailer(TrailerRequest("Help!", "1965"))
+                when(result) {
+                    is TrailerResult.Success -> println("✅ SUCCESS: ${result.url}")
+                    is TrailerResult.Error -> {
+                        println("❌ ERROR: ${result.exception.message}")
+                        result.exception.cause?.printStackTrace()
+                    }
+                    TrailerResult.NotFound -> println("∅ NOT FOUND")
+                }
+            } catch (e: Exception) {
+                println("💥 FATAL EXCEPTION: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+    }
+
+    @Test
+    fun debugYouTubeService() {
+        runBlocking {
+            val config = TrailerAiConfig(
+                youtubeApiKey = "YOUR_YOUTUBE_API_KEY_HERE", 
+                enableLogging = true
+            )
+            val service = YouTubeTrailerService(config)
+            val request = TrailerRequest("Inception", "2010")
+
+            println("\n--- Starting YouTube Debug ---")
+            val result = service.findTrailer(request)
+
+            when(result) {
                 is TrailerResult.Success -> {
-                    println("✅ PATTERN MATCH: ${result.url}")
-                    println("   Source: ${result.source}")
-                    println("   Confidence: ${result.confidence}")
+                    println("SUCCESS: URL Found -> ${result.url}")
+                    println("Confidence: ${result.confidence}")
+                }
+                is TrailerResult.Error -> println("ERROR: ${result.exception.message}")
+                TrailerResult.NotFound -> println("NOT_FOUND: No official trailer matched the filter.")
+            }
+        }
+    }
 
-                    // Should be pattern matching with low confidence
-                    assert(result.source == TrailerSource.PATTERN_MATCHING)
-                    assert(result.confidence == 0.4f)
-                }
-                is TrailerResult.Error -> {
-                    println("❌ ERROR: ${result.exception.message}")
-                }
-                TrailerResult.NotFound -> {
-                    println("❌ NOT FOUND")
+    @Test
+    fun debugPatternMatchingService() {
+        runBlocking {
+            val service = PatternMatchingService(TrailerAiConfig(enableLogging = true))
+
+            val testMovies = listOf("Inception", "The Dark Knight", "Dune", "Avatar")
+
+            println("\n--- Starting Pattern Matching Debug ---")
+            testMovies.forEach { title ->
+                val result = service.findTrailer(TrailerRequest(title))
+                if (result is TrailerResult.Success) {
+                    println("MATCH: '$title' -> ${result.url}")
+                } else {
+                    println("FAIL: No pattern found for '$title'")
                 }
             }
         }

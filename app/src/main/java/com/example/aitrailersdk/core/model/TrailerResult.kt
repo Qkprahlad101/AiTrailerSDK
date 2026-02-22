@@ -24,7 +24,7 @@ sealed class TrailerResult {
     /**
      * Error occured while searching
      */
-    data class Error(val exception: TrailerException)
+    data class Error(val exception: TrailerException) : TrailerResult()
 
     /**
      * No Trailer found for the given movie
