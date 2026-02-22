@@ -7,6 +7,8 @@ import com.example.aitrailersdk.core.impl.YouTubeTrailerService
 import com.example.aitrailersdk.core.model.TrailerRequest
 import com.example.aitrailersdk.core.model.TrailerResult
 import com.example.aitrailersdk.core.model.TrailerSource
+import com.example.aitrailersdk.BuildConfig.GEMINI_API_KEY
+import com.example.aitrailersdk.BuildConfig.YOUTUBE_API_KEY
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -56,7 +58,7 @@ class TrailerAITest {
             }
 
             // 2. Initialize Service with the Fake Provider
-            val config = TrailerAiConfig(geminiApiKey = "fake-key", enableLogging = true)
+            val config = TrailerAiConfig(geminiApiKey = GEMINI_API_KEY, enableLogging = true)
             val geminiService = GeminiTrailerService(config, fakeProvider)
 
             // 3. Test
@@ -77,8 +79,8 @@ class TrailerAITest {
             val trailerAi = TrailerAi.initialize(
                 TrailerAiConfig(
                     enableLogging = true,
-                    geminiApiKey = null,
-                    youtubeApiKey = null
+                    geminiApiKey = GEMINI_API_KEY,
+                    youtubeApiKey = YOUTUBE_API_KEY
                 )
             )
 
@@ -95,7 +97,7 @@ class TrailerAITest {
     fun debugGeminiService() {
         runBlocking {
             val config = TrailerAiConfig(
-                geminiApiKey = "AIzaSyBLS8jcDZhNuIbhCe1fuD-k3aLfEL-EJfQ",
+                geminiApiKey = GEMINI_API_KEY,
                 enableLogging = true
             )
             val service = GeminiTrailerService(config)
@@ -122,7 +124,7 @@ class TrailerAITest {
     fun debugYouTubeService() {
         runBlocking {
             val config = TrailerAiConfig(
-                youtubeApiKey = "YOUR_YOUTUBE_API_KEY_HERE", 
+                youtubeApiKey = YOUTUBE_API_KEY,
                 enableLogging = true
             )
             val service = YouTubeTrailerService(config)

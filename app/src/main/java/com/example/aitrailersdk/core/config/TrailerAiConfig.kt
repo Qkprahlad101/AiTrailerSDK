@@ -10,7 +10,7 @@ import kotlin.time.Duration
  */
 data class TrailerAiConfig(
     val geminiApiKey: String? = null,
-    val youtubeApiKey: String? = "AIzaSyAXCmciQ9mdXaDkbnVXdmYXI5vz46McF9o",
+    val youtubeApiKey: String? = null,
     val cacheStrategy: CacheStrategy = CacheStrategy.MEMORY,
     val timeOut: Duration = Duration.parse("PT10S"), //10 seconds timeOut
     val enableLogging : Boolean = false,

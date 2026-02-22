@@ -14,6 +14,9 @@ android {
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
+
+        buildConfigField("String", "GEMINI_API_KEY", "\"${project.findProperty("gemini.api.key") ?: ""}\"")
+        buildConfigField("String", "YOUTUBE_API_KEY", "\"${project.findProperty("youtube.api.key") ?: ""}\"")
     }
 
     buildTypes {
@@ -33,6 +36,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     publishing {
@@ -49,7 +53,7 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 groupId = "com.example.aitrailersdk"
                 artifactId = "trailerai-core"
-                version = "2.0.0"
+                version = "2.0.5"
 
                 from(components["release"])
             }
