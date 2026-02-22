@@ -1,5 +1,7 @@
 package com.example.aitrailersdk.core.model
 
+import com.example.aitrailersdk.core.exception.TrailerException
+
 
 /**
  * Sealed class representing trailer search results
