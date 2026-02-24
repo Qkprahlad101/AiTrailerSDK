@@ -12,7 +12,8 @@ data class TrailerRequest(
     val movieTitle: String,
     val year: String? = null,
     val director: String? = null,
-    val genre: String? = null
+    val genre: String? = null,
+    val description: String? = null
 ) {
     init {
         require(movieTitle.isNotBlank()) {"Movie Title cannot be blank"}

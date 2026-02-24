@@ -83,7 +83,8 @@ class GeminiTrailerService(
         val baseInfo = listOfNotNull(
             request.movieTitle,
             request.year?.let { "($it)" },
-            request.director?.let { "directed by $it" }
+            request.director?.let { "directed by $it" },
+            request.description?.let { "Summary: $it" }
         ).joinToString(" ")
 
         return """
