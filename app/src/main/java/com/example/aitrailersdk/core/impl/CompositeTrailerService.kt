@@ -56,16 +56,4 @@ class CompositeTrailerService(
 
         return TrailerResult.NotFound
     }
-
-    override suspend fun suggestRelevantMovies(
-        inputMovies: List<TrailerRequest>,
-        validator: MovieValidator
-    ): List<Pair<TrailerRequest, TrailerResult>> {
-        if (config.enableLogging) {
-            println("TrailerAI: Fetching suggestions for ${inputMovies.size} movies")
-        }
-        
-        // Use Gemini for suggestions as it's the smartest source
-        return geminiService.suggestRelevantMovies(inputMovies, validator)
-    }
 }

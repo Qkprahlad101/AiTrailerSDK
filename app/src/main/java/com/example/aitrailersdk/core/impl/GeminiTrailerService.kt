@@ -76,7 +76,7 @@ class GeminiTrailerService(
         }
     }
 
-    override suspend fun suggestRelevantMovies(
+    suspend fun suggestRelevantMovies(
         inputMovies: List<TrailerRequest>,
         validator: MovieValidator
     ): List<Pair<TrailerRequest, TrailerResult>> {

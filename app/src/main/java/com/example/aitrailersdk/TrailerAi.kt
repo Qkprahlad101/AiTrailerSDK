@@ -29,21 +29,6 @@ class TrailerAi private constructor(
         return service.findTrailer(request)
     }
 
-    /**
-     * Suggest relevant movies based on an input list and provide their trailers.
-     * It uses a validator (e.g., OMDB) to ensure suggestions are real and fetch full details.
-     * 
-     * @param request Input movies to base suggestions on.
-     * @param validator Implementation to verify movies against your app's data source.
-     * @return List of Pairs containing the full movie details and its trailer result.
-     */
-    suspend fun suggestRelevantMovies(
-        request: List<TrailerRequest>,
-        validator: MovieValidator
-    ): List<Pair<TrailerRequest, TrailerResult>> {
-        return service.suggestRelevantMovies(request, validator)
-    }
-
     companion object {
         /**
          * Initialize TrailerAI with configuration

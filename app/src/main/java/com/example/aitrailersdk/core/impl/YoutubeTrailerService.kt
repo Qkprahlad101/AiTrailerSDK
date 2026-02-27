@@ -63,13 +63,6 @@ class YouTubeTrailerService(
         }
     }
 
-    override suspend fun suggestRelevantMovies(
-        inputMovies: List<TrailerRequest>,
-        validator: MovieValidator
-    ): List<Pair<TrailerRequest, TrailerResult>> {
-        return emptyList() // Not supported by YouTube API service
-    }
-
     private fun buildSearchQuery(request: TrailerRequest): String {
         val parts = mutableListOf(request.movieTitle)
         request.year?.let { parts.add(it) }

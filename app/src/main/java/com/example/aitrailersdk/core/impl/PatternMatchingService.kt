@@ -52,14 +52,6 @@ class PatternMatchingService(
         } as TrailerResult
     }
 
-    override suspend fun suggestRelevantMovies(
-        inputMovies: List<TrailerRequest>,
-        validator: MovieValidator
-    ): List<Pair<TrailerRequest, TrailerResult>> {
-        // Pattern matching doesn't support suggestions
-        return emptyList()
-    }
-
     private fun findTrailerByPattern(request: TrailerRequest): String? {
         val movieKey = request.movieTitle.lowercase().trim()
 
