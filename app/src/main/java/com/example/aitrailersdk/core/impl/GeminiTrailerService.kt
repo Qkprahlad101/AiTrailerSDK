@@ -5,6 +5,7 @@ import com.example.aitrailersdk.core.exception.TrailerException
 import com.example.aitrailersdk.core.model.TrailerRequest
 import com.example.aitrailersdk.core.model.TrailerResult
 import com.example.aitrailersdk.core.model.TrailerSource
+import com.example.aitrailersdk.core.service.MovieValidator
 import com.example.aitrailersdk.core.service.TrailerService
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -13,10 +14,7 @@ import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 
 /**
- * Gemini AI service for finding trailers using Google's Gemini model.
- * 
- * This service uses the 'gemini-1.5-flash' model which is optimized for speed
- * and has a generous free tier for development.
+ * Gemini AI service for finding trailers and suggesting movies using Google's Gemini model.
  */
 class GeminiTrailerService(
     private val config: TrailerAiConfig,
@@ -30,15 +28,13 @@ class GeminiTrailerService(
 
         return try {
             withTimeout(config.timeOut) {
-                val promptText = buildPrompt(request)
+                val promptText = buildTrailerPrompt(request)
 
                 val text = if (aiProvider != null) {
                     aiProvider.invoke(promptText)
                 } else {
                     val model = GenerativeModel(
-                        modelName = "gemini-2.5-flash",               // ← changed here (recommended)
-                        // or "gemini-2.5-flash-lite"
-                        // or "gemini-3-flash-preview" for newest fast model
+                        modelName = "gemini-2.5-flash",
                         apiKey = config.geminiApiKey!!,
                         generationConfig = generationConfig {
                             temperature = 0.1f
@@ -55,7 +51,7 @@ class GeminiTrailerService(
                 }
 
                 if (config.enableLogging) {
-                    println("TrailerAI: Gemini Response: '$text'")
+                    println("TrailerAI: Gemini Trailer Response: '$text'")
                 }
 
                 val trailerUrl = extractYouTubeUrl(text)
@@ -79,7 +75,64 @@ class GeminiTrailerService(
             }
         }
     }
-    private fun buildPrompt(request: TrailerRequest): String {
+
+    override suspend fun suggestRelevantMovies(
+        inputMovies: List<TrailerRequest>,
+        validator: MovieValidator
+    ): List<Pair<TrailerRequest, TrailerResult>> {
+        if (config.geminiApiKey.isNullOrBlank() && aiProvider == null) {
+            return emptyList()
+        }
+
+        return try {
+            withTimeout(config.timeOut * 2) { // Allow more time for suggestions
+                val promptText = buildSuggestionPrompt(inputMovies)
+
+                val text = if (aiProvider != null) {
+                    aiProvider.invoke(promptText)
+                } else {
+                    val model = GenerativeModel(
+                        modelName = "gemini-2.5-flash",
+                        apiKey = config.geminiApiKey!!,
+                        generationConfig = generationConfig {
+                            temperature = 0.7f // Slightly higher for creativity in suggestions
+                        }
+                    )
+                    val response = model.generateContent(content { text(promptText) })
+                    response.text?.trim()
+                }
+
+                if (text.isNullOrBlank()) return@withTimeout emptyList()
+
+                if (config.enableLogging) {
+                    println("TrailerAI: Gemini Suggestion Response: '$text'")
+                }
+
+                val suggestedTitles = parseSuggestionResponse(text)
+                val results = mutableListOf<Pair<TrailerRequest, TrailerResult>>()
+
+                for (title in suggestedTitles) {
+                    if (results.size >= 10) break
+
+                    // Validate against external source (OMDB via App)
+                    val fullDetails = validator.validateAndGetDetails(title)
+                    if (fullDetails != null) {
+                        // Find trailer for the validated movie
+                        val trailerResult = findTrailer(fullDetails)
+                        results.add(fullDetails to trailerResult)
+                    }
+                }
+                results
+            }
+        } catch (e: Exception) {
+            if (config.enableLogging) {
+                println("TrailerAI: Suggestion Error: ${e.message}")
+            }
+            emptyList()
+        }
+    }
+
+    private fun buildTrailerPrompt(request: TrailerRequest): String {
         val baseInfo = listOfNotNull(
             request.movieTitle,
             request.year?.let { "($it)" },
@@ -95,6 +148,22 @@ class GeminiTrailerService(
             Respond with ONLY the YouTube URL in this format: https://www.youtube.com/watch?v=VIDEO_ID
             If no trailer is found, respond exactly with: NO_TRAILER_FOUND
         """.trimIndent()
+    }
+
+    private fun buildSuggestionPrompt(inputMovies: List<TrailerRequest>): String {
+        val titles = inputMovies.joinToString(", ") { it.movieTitle }
+        return """
+            Based on these movies: $titles
+            Suggest 15 similar highly-rated movies. 
+            Respond ONLY with a comma-separated list of movie titles.
+            No numbering, no descriptions, just titles.
+        """.trimIndent()
+    }
+
+    private fun parseSuggestionResponse(text: String): List<String> {
+        return text.split(",")
+            .map { it.trim().trimIndent() }
+            .filter { it.isNotBlank() }
     }
 
     internal fun extractYouTubeUrl(text: String): String? {

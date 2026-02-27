@@ -5,6 +5,7 @@ import com.example.aitrailersdk.core.exception.TrailerException
 import com.example.aitrailersdk.core.model.TrailerRequest
 import com.example.aitrailersdk.core.model.TrailerResult
 import com.example.aitrailersdk.core.model.TrailerSource
+import com.example.aitrailersdk.core.service.MovieValidator
 import com.example.aitrailersdk.core.service.TrailerService
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -49,6 +50,14 @@ class PatternMatchingService(
                 else -> TrailerResult.Error(TrailerException.NetworkException("Pattern matching failed", e))
             }
         } as TrailerResult
+    }
+
+    override suspend fun suggestRelevantMovies(
+        inputMovies: List<TrailerRequest>,
+        validator: MovieValidator
+    ): List<Pair<TrailerRequest, TrailerResult>> {
+        // Pattern matching doesn't support suggestions
+        return emptyList()
     }
 
     private fun findTrailerByPattern(request: TrailerRequest): String? {
