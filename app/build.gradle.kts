@@ -51,11 +51,38 @@ afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("release") {
-                groupId = "com.example.aitrailersdk"
-                artifactId = "trailerai-core"
-                version = "3.8.0"
+                groupId = "com.github.Qkprahlad101"
+                artifactId = "aitrailer-sdk"
+                version = "3.9.0"
 
                 from(components["release"])
+
+                pom {
+                    name.set("AiTrailer SDK")
+                    description.set("Android SDK for finding movie trailers using AI (Gemini) and YouTube APIs")
+                    url.set("https://github.com/Qkprahlad101/AiTrailerSDK")
+
+                    licenses {
+                        license {
+                            name.set("MIT License")
+                            url.set("https://opensource.org/licenses/MIT")
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id.set("Qkprahlad101")
+                            name.set("Prahlad Kumar")
+                            email.set("k.prahlad101@gmail.com")
+                        }
+                    }
+
+                    scm {
+                        connection.set("scm:git:git://github.com/Qkprahlad101/AiTrailerSDK.git")
+                        developerConnection.set("scm:git:ssh://github.com/Qkprahlad101/AiTrailerSDK.git")
+                        url.set("https://github.com/Qkprahlad101/AiTrailerSDK")
+                    }
+                }
             }
         }
 

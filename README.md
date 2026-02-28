@@ -2,12 +2,13 @@
 
 An AI-powered, robust YouTube trailer fetching library for Android applications.
 
-## 🚀 Version 2.0.0 Highlights
+## 🚀 Version 3.8.0 Highlights
 
 - **Gemini 1.5 Flash Integration**: Leverages the latest, high-speed Gemini 1.5 Flash model for near-instant trailer discovery.
 - **Provider Pattern Architecture**: Highly testable design allowing developers to easily mock AI responses in their own test suites.
 - **Modern Tech Stack**: Built with Kotlin 2.0, Coroutines 1.8.1, and Retrofit 2.11.0 for maximum performance and stability.
 - **Improved Fallback Logic**: Resilient multi-source chain that handles network failures and API limits gracefully.
+- **JitPack Distribution**: Now available via JitPack for easy integration.
 
 ## 📦 Features
 
@@ -21,33 +22,46 @@ An AI-powered, robust YouTube trailer fetching library for Android applications.
 
 ## 🛠️ Installation
 
-### 1. Publish Locally
-The SDK is currently configured for local publishing (Maven Local).
+### Via JitPack (Recommended)
 
-```bash
-./gradlew publishReleasePublicationToLocalRepoRepository
+Add JitPack repository to your root `build.gradle`:
+
+```gradle
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
 ```
 
-### 2. Configure Your Project
+Or in `settings.gradle.kts`:
 
-#### settings.gradle.kts:
 ```kotlin
 dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven {
-            url = uri("/path/to/AiTrailerSDK/app/build/localRepo")
-        }
+        maven { url = uri("https://jitpack.io") }
     }
 }
 ```
 
-#### build.gradle.kts:
+Add the dependency in your app's `build.gradle.kts`:
+
 ```kotlin
 dependencies {
-    implementation("com.example.aitrailersdk:trailerai-core:2.0.0")
+    implementation("com.github.Qkprahlad101:aitrailer-sdk:3.8.0")
 }
+```
+
+**Latest version**: [![](https://jitpack.io/v/Qkprahlad101/AiTrailerSDK.svg)](https://jitpack.io/#Qkprahlad101/AiTrailerSDK)
+
+### Local Publishing (Development)
+
+For local development and testing:
+
+```bash
+./gradlew publishReleasePublicationToLocalRepoRepository
 ```
 
 ## 🎯 Quick Start
@@ -100,8 +114,8 @@ fun testWithFakeAI() = runBlocking {
 ```
 
 ## 📄 License
-Apache License 2.0
+MIT License
 
 ---
-**Last Updated**: 2025-02-22  
-**Status**: Stable Release v2.0.0
+**Last Updated**: 2026-03-01  
+**Status**: Stable Release v3.8.0
