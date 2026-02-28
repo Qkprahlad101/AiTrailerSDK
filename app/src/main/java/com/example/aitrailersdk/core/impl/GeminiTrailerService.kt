@@ -100,7 +100,8 @@ class GeminiTrailerService(
             val promptText = buildSuggestionPrompt(inputMovies)
 
             val text = try {
-                withTimeout(config.timeOut) {
+                // Use a slightly longer timeout for the combined suggestion + trailer request
+                withTimeout(config.timeOut * 2) {
                     if (aiProvider != null) {
                         aiProvider.invoke(promptText)
                     } else {
@@ -117,7 +118,7 @@ class GeminiTrailerService(
                 }
             } catch (e: Exception) {
                 if (e is CancellationException && e !is TimeoutCancellationException) throw e
-                if (config.enableLogging) Log.e(TAG, "Gemini suggestion request failed: ${e.message}")
+                if (config.enableLogging) Log.e(TAG, "Gemini suggestion request failed: ${e.message}", e)
                 null
             }
 
@@ -132,15 +133,17 @@ class GeminiTrailerService(
             Log.d(TAG, "Parsed suggestions: $suggestions")
 
             supervisorScope {
-                suggestions.take(5).forEach { (title, trailerUrl) ->
+                // Limit the number of processed suggestions to respect rate limits and performance
+                suggestions.take(10).forEach { (title, trailerUrl) ->
                     launch {
                         try {
                             val fullDetails = validator.validateAndGetDetails(title)
                             if (fullDetails != null) {
                                 // Use trailer URL from suggestion if available, otherwise fallback to finding it
-                                val trailerResult = if (!trailerUrl.isNullOrBlank() && trailerUrl != "NO_TRAILER") {
+                                val trailerResult = if (!trailerUrl.isNullOrBlank() && trailerUrl != "NO_TRAILER" && trailerUrl.contains("youtube.com")) {
                                     TrailerResult.Success(trailerUrl, TrailerSource.GEMINI_AI, 0.9f)
                                 } else {
+                                    // Fallback if AI provided title but failed on URL
                                     findTrailer(fullDetails)
                                 }
                                 
