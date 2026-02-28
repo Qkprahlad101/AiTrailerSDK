@@ -4,6 +4,7 @@ import com.example.aitrailersdk.core.config.TrailerAiConfig
 import com.example.aitrailersdk.core.impl.CompositeTrailerService
 import com.example.aitrailersdk.core.model.TrailerRequest
 import com.example.aitrailersdk.core.model.TrailerResult
+import com.example.aitrailersdk.core.service.MovieValidator
 import com.example.aitrailersdk.core.service.TrailerService
 
 /**
@@ -13,7 +14,7 @@ import com.example.aitrailersdk.core.service.TrailerService
  * It follows a builder pattern with simple initialization.
  *
  * Usage:
- * val trailerAI = TrailerAI.initialize(TrailerAiConfig(enableLogging = true))
+ * val trailerAI = TrailerAi.initialize(TrailerAiConfig(enableLogging = true))
  * val result = trailerAI.findTrailer(TrailerRequest("Inception", "2010"))
  */
 class TrailerAi private constructor(
@@ -21,6 +22,9 @@ class TrailerAi private constructor(
     private val service: TrailerService
 ){
 
+    /**
+     * Find trailer for a single movie.
+     */
     suspend fun findTrailer(request: TrailerRequest): TrailerResult {
         return service.findTrailer(request)
     }

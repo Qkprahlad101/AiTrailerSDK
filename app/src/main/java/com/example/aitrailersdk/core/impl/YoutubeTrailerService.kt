@@ -5,6 +5,7 @@ import com.example.aitrailersdk.core.exception.TrailerException
 import com.example.aitrailersdk.core.model.TrailerRequest
 import com.example.aitrailersdk.core.model.TrailerResult
 import com.example.aitrailersdk.core.model.TrailerSource
+import com.example.aitrailersdk.core.service.MovieValidator
 import com.example.aitrailersdk.core.service.TrailerService
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
@@ -59,7 +60,7 @@ class YouTubeTrailerService(
                 is TimeoutCancellationException -> TrailerResult.Error(TrailerException.TimeoutException("YouTube API request timed out", e))
                 else -> TrailerResult.Error(TrailerException.NetworkException("YouTube API service failed", e))
             }
-        } as TrailerResult
+        }
     }
 
     private fun buildSearchQuery(request: TrailerRequest): String {
